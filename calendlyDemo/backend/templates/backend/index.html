@@ -1,0 +1,31 @@
+{% extends "backend/base.html" %}
+{% load static %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Welcome to the Event Scheduling Website</h1>
+    <p>This is a place where you can discover and schedule amazing events.</p>
+    <div class="row">
+        {% for event in events %}
+            {% if event.is_active %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.title }}</h5>
+                            <p class="card-text"><strong>Type:</strong> {{ event.type }}</p>
+                            <p class="card-text"><strong>Location:</strong> {{ event.location }}</p>
+                            <p class="card-text"><strong>Register Before:</strong> {{ event.prefered_date_time }}</p>
+                            <p class="card-text"><strong>Time Alloted:</strong> {{ event.time_alloted }} Hours</p>
+                            <p class="card-text"><strong>Description:</strong>{{ event.description|truncatewords:20|safe }}</p>
+                            <p class="card-text"><strong>Event Link: </strong>
+                                <a href="{% url 'backend:event-detail' link=event.link %}">{{ event.title }}</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

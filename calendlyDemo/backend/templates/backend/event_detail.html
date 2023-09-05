@@ -1,0 +1,188 @@
+{% extends "backend/base.html" %}
+{% load static %}
+{% block title %}Event Detail{% endblock %}
+
+{% block content %}
+
+<style>
+    #calendar {
+        height: 93vh;
+    }
+</style>
+
+<div class="container mt-5">
+    <h1>{{ object.title }}</h1>
+    <p>{{ object.description|safe }}</p>
+    <p><strong>Location:</strong> {{ object.location }}</p>
+    <p><strong>Register Before:</strong> {{ object.prefered_date_time }}</p>
+    <p><strong>Available Slots:</strong> {{ available_slots }}</p>
+    <p id="selected_slot"><strong>Selected Slot:</strong>  </p>
+    {% if available_slots > 0 %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" id="start-time" name="start_time" value="">
+        <input type="hidden" id="end-time" name="end_time" value="">
+        <button type="submit" id="book-slot" class="btn btn-primary">Book Slot</button>
+    </form>    
+    {% else %}
+    <p>No more available slots.</p>
+    {% endif %}
+    <div id="calendar"></div>
+</div>
+
+<script type='text/javascript'>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var availableSlots = [
+            // Define available time slots here (e.g., using Django template tags or JavaScript)
+            // Format: { start: '2023-09-01T10:00:00', end: '2023-09-01T12:00:00' }
+        ];
+    
+        const date = new Date();
+    
+        let day = date.getDate();
+        let month = date.getMonth() + 1;
+        let year = date.getFullYear();
+    
+        if (month < 10) {
+            month = `0${month}`;
+        }
+        if (day < 10) {
+            day = `0${day}`;
+        }
+        let currentDate = `${year}-${month}-${day}`;
+    
+        // Initialize an array to keep track of selected slots
+        var selectedSlots = [];
+        const registerBeforeDateTime = new Date('{{ object.prefered_date_time|date:"Y-m-d H:i:s" }}');
+    
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            slotMinTime: '09:00:00',  // Display from 9 AM
+            slotMaxTime: '18:00:00',  // Display until 5 PM
+            initialDate: currentDate, // Display current date
+            validRange: {
+                start: currentDate, // Set the minimum date
+                end: registerBeforeDateTime   // Set the maximum date
+            },
+            events: function (fetchInfo, successCallback, failureCallback) {
+                // Fetch booked slots data from the server using AJAX
+                $.ajax({
+                    url: '{% url 'backend:event-booked-slots' object.link %}',
+                    method: 'GET',
+                    success: function (response) {
+                        // Process the booked slots data
+                        var bookedSlots = response.booked_slots.map(function (slot) {
+                            return {
+                                title: 'Booked Slot',
+                                start: slot.start_time,
+                                end: slot.end_time,
+                                backgroundColor: 'red', // Customize the background color for booked slots
+                                borderColor: 'red', // Customize the border color for booked slots
+                                editable: false, // Make booked slots not editable
+                            };
+                        });
+
+                        // Combine the booked slots with the available slots
+                        var allSlots = availableSlots.concat(bookedSlots);
+
+                        // Call the successCallback to render events on the calendar
+                        successCallback(allSlots);
+                    },
+                    error: function (error) {
+                        // Handle errors if any
+                        console.error('Error:', error);
+                        failureCallback(error);
+                    }
+                });
+            },
+            selectable: true,
+            select: function (info) {
+                const start = new Date(info.startStr);
+                const end = new Date(info.endStr);
+    
+                // Check if the selected slot is already in the array
+                const slotIndex = selectedSlots.findIndex((slot) => {
+                    return (
+                        slot.start.getTime() === start.getTime() &&
+                        slot.end.getTime() === end.getTime()
+                    );
+                });
+    
+                if (slotIndex === -1) {
+                    // Slot is not selected, so add it to the array and highlight it
+                    selectedSlots.push({ start, end });
+    
+                    // Highlight the selected slot on the calendar
+                    calendar.addEvent({
+                        title: 'Selected Slot',
+                        start: start,
+                        end: end,
+                        backgroundColor: 'green', // Customize the background color
+                        borderColor: 'green' // Customize the border color
+                    });
+                    // Set the values of the hidden input fields
+                    document.getElementById('selected_slot').innerHTML = `<strong>Selected Slot:</strong> ${start.toLocaleString()} - ${end.toLocaleString()}`;
+                    document.getElementById('start-time').value = start.toISOString(); // Store as ISO string
+                    document.getElementById('end-time').value = end.toISOString(); // Store as ISO string
+                } else {
+                    // Slot is already selected, so remove it from the array and unhighlight it
+                    selectedSlots.splice(slotIndex, 1);
+    
+                    // Find and remove the event from the calendar
+                    const eventToRemove = calendar.getEventSources()[0].getEvents().find((event) => {
+                        return (
+                            event.start.getTime() === start.getTime() &&
+                            event.end.getTime() === end.getTime()
+                        );
+                    });
+                    if (eventToRemove) {
+                        eventToRemove.remove();
+                    }
+    
+                    // Clear the selected slot display
+                    document.getElementById('selected_slot').innerHTML = '';
+                }
+            }
+        });
+    
+        calendar.render();
+    
+        // Handle "Book Slot" button click
+        const bookSlotButton = document.getElementById('book-slot');
+        bookSlotButton.addEventListener('click', function () {
+            // Get the selected slot's start and end times from hidden input fields
+            const start_time = document.getElementById('start-time').value;
+            const end_time = document.getElementById('end-time').value;
+
+            // Check if start_time and end_time are not empty (i.e., a slot is selected)
+            if (start_time && end_time) {
+                // Make an AJAX request to send the selected slot data to the server
+                $.ajax({
+                    url: '{% url 'backend:event-detail' object.link %}', // Use the URL fetched from data-url
+                    method: 'POST',
+                    data: {
+                        'start_time': start_time,
+                        'end_time': end_time
+                    },
+                    headers: {
+                        'X-CSRFToken': csrfToken // Include the CSRF token in the headers
+                    },
+                    success: function (response) {
+                        // Handle the success response (e.g., show a success message)
+                        console.log(response.message);
+                    },
+                    error: function (error) {
+                        // Handle errors if any
+                        console.error('Error:', error);
+                    }
+                });
+            } else {
+                // Handle the case when no slot is selected
+                console.log('No slot selected.');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

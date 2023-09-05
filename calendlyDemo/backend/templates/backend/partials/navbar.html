@@ -1,0 +1,20 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'backend:home' %}">Event Scheduling</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <div class="navbar-nav ml-auto"> <!-- Wrap the items in a div with ml-auto class -->
+                <span class="navbar-text">
+                    <a class="nav-link" href="{% url 'backend:create' %}">Events-Create</a>
+                </span>
+                {% comment %} <a class="nav-link" href="{% url 'backend:calender' %}">Events-Calender</a> {% endcomment %}
+                {% comment %} <a class="nav-link" href="{% url 'backend:workflow' %}">Event-Workflow</a> {% endcomment %}
+            </div>
+        </div>
+    </div>
+</nav>

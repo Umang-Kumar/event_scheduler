@@ -1,0 +1,56 @@
+{% extends "backend/base.html" %}
+{% load static %}
+{% block title %}Home{% endblock %}
+
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Create an Event</h1>
+    <form method="post" action="/create/">
+        {% csrf_token %}
+        <div class="form-group row mb-4">
+            <label for="title" class="col-sm-3 col-form-label text-right tm-color-primary">Title</label>
+            <div class="col-sm-9">
+                {{form.title}}
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="type" class="col-sm-3 col-form-label text-right tm-color-primary">Type</label>
+            <div class="col-sm-9">
+                {{form.type}}
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="description" class="col-sm-3 col-form-label text-right tm-color-primary">Description</label>
+            <div class="col-sm-9">
+                {{form.description}}
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="location" class="col-sm-3 col-form-label text-right tm-color-primary">Location</label>
+            <div class="col-sm-9">
+                {{form.location}}
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="prefered_date_time" class="col-sm-3 col-form-label text-right tm-color-primary">Register Before</label>
+            <div class="col-sm-9">
+                <input type="datetime-local" id="prefered_date_time" name="prefered_date_time">
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="time_alloted" class="col-sm-3 col-form-label text-right tm-color-primary">Time Alloted (Hrs.)</label>
+            <div class="col-sm-9">
+                {{form.time_alloted}}
+            </div>
+        </div>
+        <div class="form-group row mb-4">
+            <label for="total_slots" class="col-sm-3 col-form-label text-right tm-color-primary">Total slots</label>
+            <div class="col-sm-9">
+                {{form.total_slots}}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Event</button>
+    </form>
+</div>
+{% endblock %}
